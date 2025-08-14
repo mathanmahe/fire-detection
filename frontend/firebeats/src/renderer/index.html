@@ -1,0 +1,59 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Firebeats</title>
+  <link rel="stylesheet" href="./styles.css" />
+  <script defer src="https://cdn.jsdelivr.net/npm/hls.js@^1"></script>
+  <script type="module" src="./app.js"></script>
+</head>
+<body>
+  <header>
+    <h1>Firebeats</h1>
+    <div id="status" class="chip">idle</div>
+  </header>
+
+  <section class="panel">
+    <h2>Connect</h2>
+    <div class="row">
+      <label>RTMP publish URL</label>
+      <input id="rtmpUrl" readonly>
+      <button id="copyRtmp">Copy</button>
+    </div>
+    <div class="row">
+      <label>HLS playback URL</label>
+      <input id="hlsUrl" readonly>
+      <button id="testHls">Test</button>
+      <button id="copyHls">Copy</button>
+    </div>
+    <div class="row">
+      <label>Camera ID</label>
+      <input id="cameraId" placeholder="ec2_camera" />
+    </div>
+    <div class="row">
+      <button id="playHls">Play HLS</button>
+      <button id="startRtc">Start WebRTC</button>
+      <button id="stop">Stop</button>
+      <label><input type="checkbox" id="toggleDet" checked> Detection overlay</label>
+    </div>
+  </section>
+
+  <section class="player">
+    <div class="video-wrap">
+      <video id="video" playsinline muted autoplay></video>
+      <canvas id="overlay"></canvas>
+    </div>
+    <div class="hud">
+      <span>Mode: <strong id="mode">—</strong></span>
+      <span>FPS: <strong id="fps">—</strong></span>
+      <span>Live‑edge: <strong id="live">—</strong></span>
+      <span>Last detection: <strong id="lastDet">—</strong></span>
+    </div>
+  </section>
+
+  <section class="logs">
+    <pre id="log"></pre>
+  </section>
+</body>
+</html>
