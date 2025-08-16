@@ -90,10 +90,29 @@ els.startRtc.onclick = async () => {
 
 els.stop.onclick = () => stopAll();
 
+function resetUiStats() {
+  els.mode.textContent = 'idle';
+  els.status.textContent = 'Stopped';
+  els.fps.textContent = '—';
+  els.live.textContent = '—';
+  els.lastDet.textContent = '—';
+}
+
+function clearVideoElement() {
+  try { els.video.pause(); } catch {}
+  // Remove any active stream/source
+  els.video.srcObject = null;
+  els.video.removeAttribute('src');
+  els.video.load(); // force the element to reset its internal state
+}
+
+
 function stopAll(){
   if(hlsPlayer){ hlsPlayer.destroy(); hlsPlayer = null; }
   stopWebRtc();
   if(overlay){ overlay.stop(); overlay = null; }
+  clearVideoElement();
+  resetUiStats();
   setMode('idle');
 }
 

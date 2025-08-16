@@ -426,3 +426,22 @@ ffmpeg -re -f lavfi -i testsrc2=size=1280x720:rate=30 \
        -c:v libx264 -preset ultrafast -tune zerolatency -g 30 \
        -f flv rtmp://127.0.0.1:1935/live/stream
 
+       # to send some stream to the python backend
+       ffmpeg -re -f lavfi -i testsrc2=size=1280x720:rate=30 \
+  -c:v libx264 -preset ultrafast -tune zerolatency -g 30 \
+  -f flv rtmp://localhost:1936/live/stream
+
+# to send the demo drone fire video. 
+```ffmpeg -stream_loop -1 -re -i ./drone-fire.mp4 \
+  -c:v libx264 -preset ultrafast -tune zerolatency -g 30 -keyint_min 30 -sc_threshold 0 \
+  -c:a aac -b:a 128k -ar 44100 -ac 2 \
+  -f flv rtmp://127.0.0.1:1936/live/stream```
+
+<!-- Plans for extension -->
+
+1. when we want to incorporate many cameras, we may need some kind of sqlite. db to store the camera data locally. 
+2. or we may need something that queries from aws. the data. 
+
+
+
+
