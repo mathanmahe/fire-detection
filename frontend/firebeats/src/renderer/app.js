@@ -28,6 +28,16 @@ const els = {
   lastDet: document.getElementById('lastDet'),
 };
 
+const dronePlaceholder = document.getElementById('dronePlaceholder');
+const quickHls = document.getElementById('quickHls');
+const quickRtc = document.getElementById('quickRtc');
+const quickHlsBtn = document.getElementById('quickHlsBtn');
+
+function showDronePlaceholder(show){
+  if(!dronePlaceholder) return;
+  dronePlaceholder.classList.toggle('hidden', !show);
+}
+
 let hlsPlayer = null;
 let overlay = null;
 let mode = 'idle';
@@ -72,6 +82,11 @@ els.copyRtmp.onclick = () => navigator.clipboard.writeText(els.rtmpUrl.value);
 els.copyHls.onclick = () => navigator.clipboard.writeText(els.hlsUrl.value);
 els.testHls.onclick = testHls;
 
+//hook
+quickHls && (quickHls.onclick = () => els.playHls.click());
+quickRtc && (quickRtc.onclick = () => els.startRtc.click());
+quickHlsBtn && (quickHlsBtn.onclick = () => els.playHls.click());
+
 els.playHls.onclick = async () => {
   stopAll();
   setMode('HLS');
@@ -79,6 +94,7 @@ els.playHls.onclick = async () => {
   await hlsPlayer.play(els.hlsUrl.value);
   sizeOverlay();
   startOverlayIfEnabled();
+  showDronePlaceholder(false);               // <- add
 };
 
 els.startRtc.onclick = async () => {
@@ -88,10 +104,13 @@ els.startRtc.onclick = async () => {
     await startWebRtc(els.video, { cameraId: els.cameraId.value, offerUrl: config.webrtcOfferUrl, onLog: log });
     sizeOverlay();
     startOverlayIfEnabled();
-  }catch(e){ log('WebRTC failed: '+e.message); setMode('idle'); }
+    showDronePlaceholder(false);
+  }catch(e){ log('WebRTC failed: '+e.message); setMode('idle'); showDronePlaceholder(false);}
 };
 
 els.stop.onclick = () => stopAll();
+
+
 
 function resetUiStats() {
   els.mode.textContent = 'idle';
@@ -117,6 +136,7 @@ function stopAll(){
   clearVideoElement();
   resetUiStats();
   setMode('idle');
+  showDronePlaceholder(false);
 }
 
 function startOverlayIfEnabled(){

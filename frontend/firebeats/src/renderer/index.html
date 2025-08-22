@@ -9,74 +9,101 @@
   <script type="module" src="./app.js"></script>
 </head>
 <body>
-  <header>
-    <h1>FireWatch</h1>
-    <div id="status" class="chip">idle</div>
+  <!-- NEW: Red navbar with tabs aligned to the right -->
+  <header class="topbar">
+    <div class="brand">
+      <h1>FireWatch</h1>
+      <div id="status" class="chip">idle</div>
+    </div>
+    <nav class="topnav">
+      <button id="tabDrone" class="tab active">Drone</button>
+      <button id="tabCctv"  class="tab">CCTV</button>
+    </nav>
   </header>
 
-  <nav class="tabs">
-  <button id="tabDrone" class="tab active">Drone</button>
-  <button id="tabCctv"  class="tab">CCTV</button>
-  </nav>
+  <!-- removed the old <nav class="tabs"> block -->
 
-  <section id = "panelDrone" class="tab-panel active">
-      <section class="card">
-        <h2>Connect</h2>
-        <div class="row">
-          <label>RTMP publish URL</label>
-          <input id="rtmpUrl" readonly>
-          <button id="copyRtmp">Copy</button>
-        </div>
-        <div class="row">
-          <label>HLS playback URL</label>
-          <input id="hlsUrl" readonly>
-          <button id="testHls">Test</button>
-          <button id="copyHls">Copy</button>
-        </div>
-        <div class="row">
-          <label>Camera ID</label>
-          <input id="cameraId" placeholder="ec2_camera" />
-        </div>
-        <div class="row">
-          <button id="playHls">Drone Stream</button>
-          <button id="startRtc">Remote Stream</button>
-          <button id="stop">Stop</button>
-          <label><input type="checkbox" id="toggleDet" checked> Detection overlay</label>
-        </div>
-      </section>
+  <section id="panelDrone" class="tab-panel active">
+    <section class="card">
+      <h2>Connect</h2>
+      <div class="row">
+        <label>RTMP publish URL</label>
+        <input id="rtmpUrl" readonly>
+        <button id="copyRtmp">Copy</button>
+      </div>
+      <div class="row">
+        <label>HLS playback URL</label>
+        <input id="hlsUrl" readonly>
+        <button id="testHls">Test</button>
+        <button id="copyHls">Copy</button>
+      </div>
+      <div class="row">
+        <label>Camera ID</label>
+        <input id="cameraId" placeholder="ec2_camera" />
+      </div>
+      <div class="row">
+        <button id="playHls">Drone Stream</button>
+        <button id="startRtc">Remote Stream</button>
+        <button id="stop">Stop</button>
+        <label><input type="checkbox" id="toggleDet" checked> Detection overlay</label>
+      </div>
+    </section>
 
-      <section class="player">
-        <div class="video-wrap">
-          <video id="video" playsinline muted autoplay></video>
-          <canvas id="overlay"></canvas>
-        </div>
-        <div class="hud">
-          <span>Mode: <strong id="mode">—</strong></span>
-          <span>FPS: <strong id="fps">—</strong></span>
-          <span>Live‑edge: <strong id="live">—</strong></span>
-          <span>Last detection: <strong id="lastDet">—</strong></span>
-        </div>
-      </section>
+    <!-- Player with nice empty-state -->
+    <section class="player">
+      <div class="video-wrap">
+        <video id="video" playsinline muted autoplay></video>
+        <canvas id="overlay"></canvas>
 
-      <section class="logs">
-        <pre id="log"></pre>
-      </section>
+        <!-- NEW empty state (shows until a stream starts) -->
+        <div id="dronePlaceholder" class="empty-state">
+          <div class="play" id="quickHlsBtn" title="Start HLS">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M8 5v14l11-7z" fill="currentColor"></path>
+            </svg>
+          </div>
+          <div class="hint">Start a stream:</div>
+          <div class="mini-buttons">
+            <button id="quickHls">HLS</button>
+            <button id="quickRtc">WebRTC</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="hud">
+        <span>Mode: <strong id="mode">—</strong></span>
+        <span>FPS: <strong id="fps">—</strong></span>
+        <span>Live-edge: <strong id="live">—</strong></span>
+        <span>Last detection: <strong id="lastDet">—</strong></span>
+      </div>
+    </section>
+
+    <section class="logs">
+      <pre id="log"></pre>
+    </section>
   </section>
-
 
   <section id="panelCctv" class="tab-panel">
     <div class="row">
       <label>Stream</label>
-      <select id="cctvStreamSel">
-      </select>
+      <select id="cctvStreamSel"></select>
       <button id="cctvLoad">Load stream</button>
       <button id="cctvStop">Stop</button>
       <button id="cctvTest">Test fire detection</button>
     </div>
 
+    <!-- Same styled player w/ placeholder -->
     <div class="video-wrap" style="max-width: 960px">
-      <!-- MJPEG works best in an <img>; <video> won’t play multipart MJPEG in most browsers -->
-      <img src = "../images/stream_icon.png" id="cctvImg" alt="CCTV stream" style="width:100%; background:#000; border:1px solid #333; border-radius:8px" />
+      <!-- MJPEG is best in <img> -->
+      <img src="../images/stream_icon.png" id="cctvImg" alt="CCTV stream" />
+      <div id="cctvPlaceholder" class="empty-state">
+        <div class="play" id="quickCctvLoad" title="Load stream">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M8 5v14l11-7z" fill="currentColor"></path>
+          </svg>
+        </div>
+        <div class="hint">Choose a source and load the stream</div>
+      </div>
     </div>
 
     <div class="hud" id="cctvHud">
@@ -89,11 +116,5 @@
 
     <pre id="cctvLog" class="logs"></pre>
   </section>
-
-
-
-
-
-
 </body>
 </html>

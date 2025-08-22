@@ -21,6 +21,15 @@ let reconnectTimer = null;
 let reconnectDelay = 1000;   // start with 1s, exponential backoff
 let currentStream = null;
 
+const placeholder = document.getElementById('cctvPlaceholder');
+const quickLoad = document.getElementById('quickCctvLoad');
+
+function showCctvPlaceholder(show){
+  if(!placeholder) return;
+  placeholder.classList.toggle('hidden', !show);
+}
+quickLoad && quickLoad.addEventListener('click', () => loadStream());
+
 function log(msg){
   const ts = new Date().toLocaleTimeString();
   els.log.textContent += `[${ts}] ${msg}\n`;
@@ -99,6 +108,8 @@ function loadStream(){
     // cache-bust so the browser opens a fresh long-lived connection
     els.img.src = cctv.streamUrl(which) + `?t=${Date.now()}`;
     log(`loading /video_feed/${which}`);
+    showCctvPlaceholder(false);              // <- hide on attempt
+
   };
 
   // When the stream connection ends (clean close) browsers often fire 'load'
@@ -131,6 +142,7 @@ function stopStream(){
   els.img.onerror = null;
   els.img.src = '';
   stopPolling();
+  showCctvPlaceholder(true); 
   log('stopped stream');
 }
 
