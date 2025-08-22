@@ -17,6 +17,10 @@ const els = {
 
 let pollTimer = null;
 
+let reconnectTimer = null;
+let reconnectDelay = 1000;   // start with 1s, exponential backoff
+let currentStream = null;
+
 function log(msg){
   const ts = new Date().toLocaleTimeString();
   els.log.textContent += `[${ts}] ${msg}\n`;
@@ -66,6 +70,7 @@ function startPolling(){
 }
 function stopPolling(){ if(pollTimer){ clearInterval(pollTimer); pollTimer=null; } }
 
+/*
 function loadStream(){
   const which = els.sel.value;                      // <— use the right element
   if (!which) { log('no stream selected'); return; }
@@ -74,11 +79,63 @@ function loadStream(){
   startPolling();
 }
 
+
 function stopStream(){
   els.img.src = '';
   stopPolling();
   log('stopped stream');
 }
+*/
+function loadStream(){
+  const which = els.sel.value;
+  if (!which) { log('no stream selected'); return; }
+
+  // cancel any previous reconnect loop
+  if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null; }
+  reconnectDelay = 1000;   // reset backoff each time user presses Load
+  currentStream = which;
+
+  const setSrc = () => {
+    // cache-bust so the browser opens a fresh long-lived connection
+    els.img.src = cctv.streamUrl(which) + `?t=${Date.now()}`;
+    log(`loading /video_feed/${which}`);
+  };
+
+  // When the stream connection ends (clean close) browsers often fire 'load'
+  els.img.onload = () => {
+    // If the connection closed, try reconnecting after a short delay
+    if (currentStream === which) {
+      reconnectDelay = Math.min(reconnectDelay * 1.5, 10000);
+      log(`stream ended; reconnecting in ${Math.round(reconnectDelay/1000)}s…`);
+      reconnectTimer = setTimeout(setSrc, reconnectDelay);
+    }
+  };
+
+  // When the connection errors out, also retry
+  els.img.onerror = () => {
+    if (currentStream === which) {
+      reconnectDelay = Math.min(reconnectDelay * 2, 10000);
+      log(`stream error; reconnecting in ${Math.round(reconnectDelay/1000)}s…`);
+      reconnectTimer = setTimeout(setSrc, reconnectDelay);
+    }
+  };
+
+  setSrc();
+  startPolling();  // status/fire polling is fine to keep running
+}
+
+function stopStream(){
+  currentStream = null;
+  if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null; }
+  els.img.onload = null;
+  els.img.onerror = null;
+  els.img.src = '';
+  stopPolling();
+  log('stopped stream');
+}
+
+
+
 
 async function testDetection(){
   try{
