@@ -14,3 +14,30 @@ button:hover{border-color:#444}
 .chip{padding:4px 8px;border:1px solid #333;border-radius:999px;color:#ccc}
 .logs{padding:12px 16px;border-top:1px solid #222}
 #log{max-height:220px;overflow:auto;background:#0f0f0f;padding:10px;border-radius:8px}
+
+
+
+
+/* .tabs { display:flex; gap:.5rem; padding: .5rem 0; }
+.tab { padding:.4rem .8rem; border:1px solid #333; border-radius:8px; background:#1e1e1e; }
+.tab.active { background:#2b2b2b; }
+.panel { display:none; }
+.panel.active { display:block; } */
+
+/* Only hide top-level tab panels, not inner cards */
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* Optional: style inner blocks */
+.card { background:#141414; border:1px solid #2b2b2b; border-radius:10px; padding:12px; margin-bottom:12px; }
+
+/* Tabs */
+.tabs { display:flex; gap:.5rem; padding:.5rem 0; }
+.tab { padding:.4rem .8rem; border:1px solid #333; border-radius:8px; background:#1e1e1e; cursor:pointer; }
+.tab.active { background:#2b2b2b; }
+
+.grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap:12px; }
+.tile { background:#0a0a0a; border:1px solid #2b2b2b; border-radius:10px; padding:8px; }
+.tile video { width:100%; background:#000; border-radius:8px; }
+.tile .row { display:flex; gap:6px; align-items:center; justify-content:space-between; margin-top:6px; }
+.badge { font: 12px/1 system-ui; opacity:.8; }

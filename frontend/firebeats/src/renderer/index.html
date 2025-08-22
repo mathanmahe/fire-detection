@@ -3,57 +3,97 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Firebeats</title>
+  <title>FireWatch</title>
   <link rel="stylesheet" href="./styles.css" />
   <script defer src="https://cdn.jsdelivr.net/npm/hls.js@^1"></script>
   <script type="module" src="./app.js"></script>
 </head>
 <body>
   <header>
-    <h1>Firebeats</h1>
+    <h1>FireWatch</h1>
     <div id="status" class="chip">idle</div>
   </header>
 
-  <section class="panel">
-    <h2>Connect</h2>
-    <div class="row">
-      <label>RTMP publish URL</label>
-      <input id="rtmpUrl" readonly>
-      <button id="copyRtmp">Copy</button>
-    </div>
-    <div class="row">
-      <label>HLS playback URL</label>
-      <input id="hlsUrl" readonly>
-      <button id="testHls">Test</button>
-      <button id="copyHls">Copy</button>
-    </div>
-    <div class="row">
-      <label>Camera ID</label>
-      <input id="cameraId" placeholder="ec2_camera" />
-    </div>
-    <div class="row">
-      <button id="playHls">Play HLS</button>
-      <button id="startRtc">Start WebRTC</button>
-      <button id="stop">Stop</button>
-      <label><input type="checkbox" id="toggleDet" checked> Detection overlay</label>
-    </div>
+  <nav class="tabs">
+  <button id="tabDrone" class="tab active">Drone</button>
+  <button id="tabCctv"  class="tab">CCTV</button>
+  </nav>
+
+  <section id = "panelDrone" class="tab-panel active">
+      <section class="card">
+        <h2>Connect</h2>
+        <div class="row">
+          <label>RTMP publish URL</label>
+          <input id="rtmpUrl" readonly>
+          <button id="copyRtmp">Copy</button>
+        </div>
+        <div class="row">
+          <label>HLS playback URL</label>
+          <input id="hlsUrl" readonly>
+          <button id="testHls">Test</button>
+          <button id="copyHls">Copy</button>
+        </div>
+        <div class="row">
+          <label>Camera ID</label>
+          <input id="cameraId" placeholder="ec2_camera" />
+        </div>
+        <div class="row">
+          <button id="playHls">Drone Stream</button>
+          <button id="startRtc">Remote Stream</button>
+          <button id="stop">Stop</button>
+          <label><input type="checkbox" id="toggleDet" checked> Detection overlay</label>
+        </div>
+      </section>
+
+      <section class="player">
+        <div class="video-wrap">
+          <video id="video" playsinline muted autoplay></video>
+          <canvas id="overlay"></canvas>
+        </div>
+        <div class="hud">
+          <span>Mode: <strong id="mode">—</strong></span>
+          <span>FPS: <strong id="fps">—</strong></span>
+          <span>Live‑edge: <strong id="live">—</strong></span>
+          <span>Last detection: <strong id="lastDet">—</strong></span>
+        </div>
+      </section>
+
+      <section class="logs">
+        <pre id="log"></pre>
+      </section>
   </section>
 
-  <section class="player">
-    <div class="video-wrap">
-      <video id="video" playsinline muted autoplay></video>
-      <canvas id="overlay"></canvas>
+
+  <section id="panelCctv" class="tab-panel">
+    <div class="row">
+      <label>Stream</label>
+      <select id="cctvStreamSel">
+      </select>
+      <button id="cctvLoad">Load stream</button>
+      <button id="cctvStop">Stop</button>
+      <button id="cctvTest">Test fire detection</button>
     </div>
-    <div class="hud">
-      <span>Mode: <strong id="mode">—</strong></span>
-      <span>FPS: <strong id="fps">—</strong></span>
-      <span>Live‑edge: <strong id="live">—</strong></span>
-      <span>Last detection: <strong id="lastDet">—</strong></span>
+
+    <div class="video-wrap" style="max-width: 960px">
+      <!-- MJPEG works best in an <img>; <video> won’t play multipart MJPEG in most browsers -->
+      <img id="cctvImg" alt="CCTV stream" style="width:100%; background:#000; border:1px solid #333; border-radius:8px" />
     </div>
+
+    <div class="hud" id="cctvHud">
+      <span>Camera: <strong id="cctvCamId">—</strong></span>
+      <span>Streams: <strong id="cctvStreams">—</strong></span>
+      <span>Active: <strong id="cctvActive">—</strong></span>
+      <span>Fire: <strong id="cctvFire">—</strong></span>
+      <span>Last check: <strong id="cctvLast">—</strong></span>
+    </div>
+
+    <pre id="cctvLog" class="logs"></pre>
   </section>
 
-  <section class="logs">
-    <pre id="log"></pre>
-  </section>
+
+
+
+
+
 </body>
 </html>

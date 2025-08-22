@@ -2,6 +2,9 @@ import { config } from './config.js';
 import { HlsPlayer } from './player-hls.js';
 import { startWebRtc, stopWebRtc } from './player-webrtc.js';
 import { DetectionOverlay } from './detection-overlay.js';
+import { initCctv } from './cctv.js';
+
+/* Drone logic */
 
 // getting elements from the dom
 const els = {
@@ -92,7 +95,7 @@ els.stop.onclick = () => stopAll();
 
 function resetUiStats() {
   els.mode.textContent = 'idle';
-  els.status.textContent = 'Stopped';
+  // els.status.textContent = 'Stopped';
   els.fps.textContent = '—';
   els.live.textContent = '—';
   els.lastDet.textContent = '—';
@@ -139,3 +142,27 @@ window.addEventListener('keydown', (e)=>{
   if(e.key.toLowerCase()==='d') els.toggleDet.click();
   if(e.key.toLowerCase()==='l') testHls();
 });
+
+// Tab switching logic
+const tabDroneBtn = document.getElementById('tabDrone');
+const tabCctvBtn  = document.getElementById('tabCctv');
+const panelDrone  = document.getElementById('panelDrone');
+const panelCctv   = document.getElementById('panelCctv');
+
+function showTab(which){
+  // buttons
+  tabDroneBtn.classList.toggle('active', which === 'drone');
+  tabCctvBtn.classList.toggle('active',  which === 'cctv');
+
+  // panels
+  panelDrone.classList.toggle('active', which === 'drone');
+  panelCctv.classList.toggle('active',  which === 'cctv');
+}
+
+tabDroneBtn.addEventListener('click', () => showTab('drone'));
+tabCctvBtn .addEventListener('click', () => showTab('cctv'));
+
+// default
+showTab('drone');
+
+initCctv();

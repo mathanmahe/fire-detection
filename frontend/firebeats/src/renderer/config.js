@@ -38,5 +38,38 @@ export const config = {
   rtmp: () => `rtmp://${location.hostname}:${RTMP_PORT}/live/stream`,
   hls:  () => `${location.protocol}//${location.hostname}:${HLS_PORT}/hls/stream.m3u8`,
   detectionEndpoint: `http://${location.hostname}:${API_PORT}/detect`,
-  webrtcOfferUrl: `${location.protocol}//${location.hostname}:${HLS_PORT}/webrtc/offer`
+  webrtcOfferUrl: `${location.protocol}//${location.hostname}:${HLS_PORT}/webrtc/offer`,
+
+  // // cctv 
+  // hlsBase: () => 'http://localhost:8082/hls/live',
+  // // API endpoints (local edge)
+  // api: {
+  //   list:  () => 'http://localhost:8082/api/cameras',
+  //   add:   () => 'http://localhost:8082/api/cameras',
+  //   start: (id)=> `http://localhost:8082/api/cameras/${id}/start`,
+  //   stop:  (id)=> `http://localhost:8082/api/cameras/${id}/stop`,
+  //   test:  (id)=> `http://localhost:8082/api/cameras/${id}/test`,
+  // }
+};
+
+
+// export const cctv = {
+//   base: `${location.protocol}//${location.hostname}:8083`, // flask port in camera_fire_final_local.py
+//   // streamUrl: (which = 'sub') => `${location.protocol}//${location.hostname}:8083/video_feed/${which}`,
+//   streamUrl: (name) => `${HTTP}:8083/video_feed/${name}`,
+//   status:     () => `${location.protocol}//${location.hostname}:8083/api/status`,
+//   fireStatus: () => `${location.protocol}//${location.hostname}:8083/api/fire_status`,
+//   testDetect: () => `${location.protocol}//${location.hostname}:8083/api/test_fire_detection`,
+// };
+
+// config.js
+const host = (location.hostname && location.hostname.length) ? location.hostname : 'localhost';
+const proto = (location.protocol === 'file:') ? 'http:' : location.protocol;
+const rtsp_port = 8083
+export const cctv = {
+  base:       `${proto}//${host}:${rtsp_port}`,
+  streamUrl:  (name) => `${proto}//${host}:${rtsp_port}/video_feed/${encodeURIComponent(name)}`,
+  status:     ()      => `${proto}//${host}:${rtsp_port}/api/status`,
+  fireStatus: ()      => `${proto}//${host}:${rtsp_port}/api/fire_status`,
+  testDetect: ()      => `${proto}//${host}:${rtsp_port}/api/test_fire_detection`,
 };
