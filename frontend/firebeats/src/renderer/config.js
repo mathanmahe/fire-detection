@@ -1,6 +1,6 @@
 const HLS_PORT   = 8080; 
 const RTMP_PORT  = 1935; 
-const rtsp_port = 8082; 
+const rtsp_port = 8080; 
 const API_PORT   = 9000;   // detection server
 const USE_TUNNEL = false;  
 
