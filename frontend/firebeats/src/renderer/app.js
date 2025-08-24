@@ -2,6 +2,9 @@ import { config } from './config.js';
 import { HlsPlayer } from './player-hls.js';
 import { startWebRtc, stopWebRtc } from './player-webrtc.js';
 import { DetectionOverlay } from './detection-overlay.js';
+import { initCctv } from './cctv.js';
+
+/* Drone logic */
 
 // getting elements from the dom
 const els = {
@@ -24,6 +27,16 @@ const els = {
   mode: document.getElementById('mode'),
   lastDet: document.getElementById('lastDet'),
 };
+
+const dronePlaceholder = document.getElementById('dronePlaceholder');
+const quickHls = document.getElementById('quickHls');
+const quickRtc = document.getElementById('quickRtc');
+const quickHlsBtn = document.getElementById('quickHlsBtn');
+
+function showDronePlaceholder(show){
+  if(!dronePlaceholder) return;
+  dronePlaceholder.classList.toggle('hidden', !show);
+}
 
 let hlsPlayer = null;
 let overlay = null;
@@ -69,6 +82,11 @@ els.copyRtmp.onclick = () => navigator.clipboard.writeText(els.rtmpUrl.value);
 els.copyHls.onclick = () => navigator.clipboard.writeText(els.hlsUrl.value);
 els.testHls.onclick = testHls;
 
+//hook
+quickHls && (quickHls.onclick = () => els.playHls.click());
+quickRtc && (quickRtc.onclick = () => els.startRtc.click());
+quickHlsBtn && (quickHlsBtn.onclick = () => els.playHls.click());
+
 els.playHls.onclick = async () => {
   stopAll();
   setMode('HLS');
@@ -76,6 +94,7 @@ els.playHls.onclick = async () => {
   await hlsPlayer.play(els.hlsUrl.value);
   sizeOverlay();
   startOverlayIfEnabled();
+  showDronePlaceholder(false);               // <- add
 };
 
 els.startRtc.onclick = async () => {
@@ -85,16 +104,39 @@ els.startRtc.onclick = async () => {
     await startWebRtc(els.video, { cameraId: els.cameraId.value, offerUrl: config.webrtcOfferUrl, onLog: log });
     sizeOverlay();
     startOverlayIfEnabled();
-  }catch(e){ log('WebRTC failed: '+e.message); setMode('idle'); }
+    showDronePlaceholder(false);
+  }catch(e){ log('WebRTC failed: '+e.message); setMode('idle'); showDronePlaceholder(false);}
 };
 
 els.stop.onclick = () => stopAll();
+
+
+
+function resetUiStats() {
+  els.mode.textContent = 'idle';
+  // els.status.textContent = 'Stopped';
+  els.fps.textContent = '—';
+  els.live.textContent = '—';
+  els.lastDet.textContent = '—';
+}
+
+function clearVideoElement() {
+  try { els.video.pause(); } catch {}
+  // Remove any active stream/source
+  els.video.srcObject = null;
+  els.video.removeAttribute('src');
+  els.video.load(); // force the element to reset its internal state
+}
+
 
 function stopAll(){
   if(hlsPlayer){ hlsPlayer.destroy(); hlsPlayer = null; }
   stopWebRtc();
   if(overlay){ overlay.stop(); overlay = null; }
+  clearVideoElement();
+  resetUiStats();
   setMode('idle');
+  showDronePlaceholder(false);
 }
 
 function startOverlayIfEnabled(){
@@ -120,3 +162,27 @@ window.addEventListener('keydown', (e)=>{
   if(e.key.toLowerCase()==='d') els.toggleDet.click();
   if(e.key.toLowerCase()==='l') testHls();
 });
+
+// Tab switching logic
+const tabDroneBtn = document.getElementById('tabDrone');
+const tabCctvBtn  = document.getElementById('tabCctv');
+const panelDrone  = document.getElementById('panelDrone');
+const panelCctv   = document.getElementById('panelCctv');
+
+function showTab(which){
+  // buttons
+  tabDroneBtn.classList.toggle('active', which === 'drone');
+  tabCctvBtn.classList.toggle('active',  which === 'cctv');
+
+  // panels
+  panelDrone.classList.toggle('active', which === 'drone');
+  panelCctv.classList.toggle('active',  which === 'cctv');
+}
+
+tabDroneBtn.addEventListener('click', () => showTab('drone'));
+tabCctvBtn .addEventListener('click', () => showTab('cctv'));
+
+// default
+showTab('drone');
+
+initCctv();

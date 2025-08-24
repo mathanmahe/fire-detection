@@ -39,14 +39,16 @@ os.umask(0o022)
 
 # Base directory for all assets (host AND inside the container)
 # BASE        = "/home/ubuntu/stream"
-BASE = os.environ.get("FIREBEATS_BASE", os.path.expanduser("~/firebeats/stream"))
+# BASE = os.environ.get("FIREBEATS_BASE", os.path.expanduser("~/firebeats/stream"))
+BASE = "/Users/mathan/firebeats/py-backend"
 NGINX_CONF  = f"{BASE}/nginx_rtmp.conf"
 WWW_ROOT    = f"{BASE}/www"
 HLS_PATH    = f"{BASE}/hls"
 FRAME_PATH  = f"{BASE}/frame.jpg"
 
 # Web port for serving UI + HLS
-TUNNEL_PORT = 8080
+# TUNNEL_PORT = 8080
+TUNNEL_PORT = 8082
 
 # Camera/ID
 CAMERA_ID   = sys.argv[1] if len(sys.argv) > 1 else "ec2_camera"
@@ -121,7 +123,8 @@ def get_ec2_ips():
     return public_ip, private_ip
 
 PUBLIC_IP, PRIVATE_IP = get_ec2_ips()
-PUSH_URL = f"rtmp://{PUBLIC_IP}:1935/live/stream"
+# PUSH_URL = f"rtmp://{PUBLIC_IP}:1935/live/stream"
+PUSH_URL = f"rtmp://127.0.0.1:1936/live/stream"
 
 # --------------------------------------------------------------------------------------
 # DETECTOR
@@ -829,7 +832,7 @@ def start_services():
 
     # Stop any existing container
     print('🧹 Cleaning up existing containers...')
-    subprocess.run(['docker', 'rm', '-f', 'rtmp-server'],
+    subprocess.run(['docker', 'rm', '-f', 'rtmp-server-py'],
                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
     # Pull image
@@ -843,8 +846,9 @@ def start_services():
     # Start container with correct mounts
     print('🐳 Starting Docker container...')
     docker_cmd = [
-        'docker', 'run', '-d', '--name', 'rtmp-server',
-        '-p', '1935:1935',
+        'docker', 'run', '-d', '--name', 'rtmp-server-py',
+        # '-p', '1935:1935',
+        '-p', '1936:1935',
         '-p', f'{TUNNEL_PORT}:80',
         '-v', f'{NGINX_CONF}:/etc/nginx/nginx.conf:ro',
         '-v', f'{WWW_ROOT}:{WWW_ROOT}:ro',
@@ -942,7 +946,7 @@ def start_tunnel():
 def stop_services(tunnel_process):
     print('🛑 Stopping services...')
     try:
-        subprocess.run(['docker', 'rm', '-f', 'rtmp-server'],
+        subprocess.run(['docker', 'rm', '-f', 'rtmp-server-py'],
                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     except Exception:
         pass
@@ -964,16 +968,16 @@ def diagnose_rtmp_server():
             return None
 
     try:
-        result = run_docker_cmd(['docker', 'ps', '-a', '--filter', 'name=rtmp-server',
+        result = run_docker_cmd(['docker', 'ps', '-a', '--filter', 'name=rtmp-server-py',
                                  '--format', 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'])
-        if result and 'rtmp-server' in result.stdout:
+        if result and 'rtmp-server-py' in result.stdout:
             print('[✓] Docker container found')
             for line in result.stdout.strip().split('\n')[1:]:
-                if 'rtmp-server' in line:
+                if 'rtmp-server-py' in line:
                     print(f'    {line}')
                     if 'Restarting' in line or 'Exited' in line:
                         print('[❌] Container is crashing! Checking logs...')
-                        log_result = run_docker_cmd(['docker', 'logs', '--tail', '50', 'rtmp-server'])
+                        log_result = run_docker_cmd(['docker', 'logs', '--tail', '50', 'rtmp-server-py'])
                         if log_result:
                             print('\n📋 CONTAINER LOGS (tail):')
                             print(log_result.stdout or log_result.stderr)
@@ -1006,7 +1010,8 @@ def diagnose_rtmp_server():
     try:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(5)
-        result = sock.connect_ex((PUBLIC_IP, 1935))
+        # result = sock.connect_ex((PUBLIC_IP, 1935))
+        result = sock.connect_ex(("127.0.0.1", 1936))
         sock.close()
         if result == 0:
             print('[✓] RTMP port 1935 is accessible')
@@ -1023,7 +1028,7 @@ def diagnose_rtmp_server():
           f'-c:v libx264 -preset ultrafast -tune zerolatency -b:v 1000k -g 30 '
           f'-f flv rtmp://{PUBLIC_IP}:1935/live/stream')
     print(f'3) Stats: http://localhost:{TUNNEL_PORT}/stat')
-    print('4) Logs:  docker logs -f rtmp-server')
+    print('4) Logs:  docker logs -f rtmp-server-py')
     return True
 
 def wait_for_rtmp_stream():
@@ -1135,7 +1140,7 @@ if __name__ == '__main__':
         print('   • If remote not connecting, check Security Groups (port 1935)')
         print('   • Monitor RTMP stats at: https://{}/stat'.format(domain))
         print(f'   • Test locally: ffmpeg -f lavfi -i testsrc2 -f flv {PUSH_URL}')
-        print('   • Check Docker logs: docker logs -f rtmp-server')
+        print('   • Check Docker logs: docker logs -f rtmp-server-py')
         print('=' * 60)
 
         # Wait for RTMP stream to start producing HLS

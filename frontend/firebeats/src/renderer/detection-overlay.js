@@ -3,29 +3,59 @@ export class DetectionOverlay{
     this.video = video; this.canvas = canvas; this.endpoint = endpoint; this.cameraId = cameraId;
     this.onBoxes = onBoxes; this.onFps = onFps; this.timer = null; this.ctx = canvas.getContext('2d');
     this.lastT = 0; this.off = document.createElement('canvas'); this.offCtx = this.off.getContext('2d');
+    this.running = false;                    // <— NEW
+    this.abortCtrl = null;                   // <— optional: cancel in-flight fetch
   }
-  start(){ this.stop(); this.loop(); }
-  stop(){ if(this.timer) cancelAnimationFrame(this.timer); this.timer=null; this.ctx.clearRect(0,0,this.canvas.width,this.canvas.height); }
+  start(){ 
+    this.stop();
+    this.running = true;
+    this.loop(); 
+  }
+  stop(){ 
+    this.running = false;
+    if(this.timer) cancelAnimationFrame(this.timer); 
+    this.timer=null; 
+    if (this.abortCtrl) this.abortCtrl.abort(); 
+    this.abortCtrl = null;
+    this.lastT = 0;
+    this.onFps && this.onFps(0)
+    this.ctx.clearRect(0,0,this.canvas.width,this.canvas.height); 
+  }
   async loop(){
     const draw = async ()=>{
+      if (!this.running) return;
       // Size once per frame in case layout changed
       const r = this.video.getBoundingClientRect(); this.canvas.width=r.width; this.canvas.height=r.height; this.off.width=r.width; this.off.height=r.height;
       // Draw current frame to offscreen
       this.offCtx.drawImage(this.video, 0, 0, r.width, r.height);
       const blob = await new Promise(res=> this.off.toBlob(res, 'image/jpeg', 0.7));
-      if(blob){
+      if(blob && this.running){
         try{
           const ab = await blob.arrayBuffer();
-          const resp = await fetch(this.endpoint, { method:'POST', headers: { 'Content-Type':'application/octet-stream','camera-id': this.cameraId }, body: ab });
+          this.abortCtrl = new AbortController();   // <— optional
+
+          const resp = await fetch(this.endpoint, { 
+            method:'POST', 
+            headers: { 'Content-Type':'application/octet-stream','camera-id': this.cameraId }, 
+            body: ab,
+            signal: this.abortCtrl.signal,
+          });
           if(resp.ok){
             const data = await resp.json();
             this.drawBoxes(data.boxes||[], r.width, r.height);
             this.onBoxes((data.boxes||[]).length);
           }
         }catch(e){ /* silent; keep overlay alive */ }
+        finally{ this.abortCtrl = null; }
       }
       // FPS
-      const now = performance.now(); if(this.lastT){ this.onFps(1000/(now-this.lastT)); } this.lastT = now;
+      const now = performance.now(); 
+      if(this.lastT){ 
+        this.onFps(1000/(now-this.lastT)); 
+      } 
+      this.lastT = this.running ? now : 0;
+
+      if (!this.running) return;   
       this.timer = requestAnimationFrame(draw);
     };
     this.timer = requestAnimationFrame(draw);
