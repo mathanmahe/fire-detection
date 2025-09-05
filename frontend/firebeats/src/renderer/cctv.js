@@ -1,8 +1,178 @@
+// // cctv.js
+// import { cctv } from './config.js';
+
+// const els = {
+//   img:      document.getElementById('cctvImg'),
+//   sel:      document.getElementById('cctvStreamSel'),
+//   loadBtn:  document.getElementById('cctvLoad'),
+//   stopBtn:  document.getElementById('cctvStop'),
+//   testBtn:  document.getElementById('cctvTest'),
+//   camId:    document.getElementById('cctvCamId'),
+//   streams:  document.getElementById('cctvStreams'),
+//   active:   document.getElementById('cctvActive'),
+//   fire:     document.getElementById('cctvFire'),
+//   last:     document.getElementById('cctvLast'),
+//   log:      document.getElementById('cctvLog'),
+// };
+
+// let pollTimer = null;
+
+// let reconnectTimer = null;
+// let reconnectDelay = 1000;   // start with 1s, exponential backoff
+// let currentStream = null;
+
+// const placeholder = document.getElementById('cctvPlaceholder');
+// const quickLoad = document.getElementById('quickCctvLoad');
+
+// function showCctvPlaceholder(show){
+//   if(!placeholder) return;
+//   placeholder.classList.toggle('hidden', !show);
+// }
+// quickLoad && quickLoad.addEventListener('click', () => loadStream());
+
+// function log(msg){
+//   const ts = new Date().toLocaleTimeString();
+//   els.log.textContent += `[${ts}] ${msg}\n`;
+//   els.log.scrollTop = els.log.scrollHeight;
+// }
+
+// async function fetchJson(url){
+//   const r = await fetch(url, { cache: 'no-store' });
+//   if(!r.ok) throw new Error(`${r.status} ${r.statusText}`);
+//   return r.json();
+// }
+
+// async function populateStreams(names) {
+//   // Always replace options with what backend reports
+//   els.sel.innerHTML = '';
+//   for (const n of names) {
+//     const opt = document.createElement('option');
+//     opt.value = opt.textContent = n;
+//     els.sel.appendChild(opt);
+//   }
+// }
+
+// async function refreshStatus(){
+//   try{
+//     const s = await fetchJson(cctv.status());
+//     els.camId.textContent   = s.camera_id ?? '—';
+//     els.streams.textContent = (s.streams || []).join(', ') || '—';
+//     els.active.textContent  = Object.keys(s.active_streams || {}).join(', ') || '—';
+
+//     if (Array.isArray(s.streams) && s.streams.length) {
+//       await populateStreams(s.streams);       // <— always sync dropdown
+//     }
+//   }catch(e){ log('status error: '+e.message); }
+// }
+
+// async function refreshFire(){
+//   try{
+//     const f = await fetchJson(cctv.fireStatus());
+//     els.fire.textContent = String(f.fire_detected ?? false);
+//     els.last.textContent = f.last_check ?? '—';
+//   }catch(e){ log('fire status error: '+e.message); }
+// }
+
+// function startPolling(){
+//   stopPolling();
+//   pollTimer = setInterval(()=>{ refreshStatus(); refreshFire(); }, 2000);
+// }
+// function stopPolling(){ if(pollTimer){ clearInterval(pollTimer); pollTimer=null; } }
+
+// /*
+// function loadStream(){
+//   const which = els.sel.value;                      // <— use the right element
+//   if (!which) { log('no stream selected'); return; }
+//   els.img.src = cctv.streamUrl(which) + `?t=${Date.now()}`; // cache-bust
+//   log(`loading /video_feed/${which}`);
+//   startPolling();
+// }
+
+
+// function stopStream(){
+//   els.img.src = '';
+//   stopPolling();
+//   log('stopped stream');
+// }
+// */
+// function loadStream(){
+//   const which = els.sel.value;
+//   if (!which) { log('no stream selected'); return; }
+
+//   // cancel any previous reconnect loop
+//   if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null; }
+//   reconnectDelay = 1000;   // reset backoff each time user presses Load
+//   currentStream = which;
+
+//   const setSrc = () => {
+//     // cache-bust so the browser opens a fresh long-lived connection
+//     els.img.src = cctv.streamUrl(which) + `?t=${Date.now()}`;
+//     log(`loading /video_feed/${which}`);
+//     showCctvPlaceholder(false);              // <- hide on attempt
+
+//   };
+
+//   // When the stream connection ends (clean close) browsers often fire 'load'
+//   els.img.onload = () => {
+//     // If the connection closed, try reconnecting after a short delay
+//     if (currentStream === which) {
+//       reconnectDelay = Math.min(reconnectDelay * 1.5, 10000);
+//       log(`stream ended; reconnecting in ${Math.round(reconnectDelay/1000)}s…`);
+//       reconnectTimer = setTimeout(setSrc, reconnectDelay);
+//     }
+//   };
+
+//   // When the connection errors out, also retry
+//   els.img.onerror = () => {
+//     if (currentStream === which) {
+//       reconnectDelay = Math.min(reconnectDelay * 2, 10000);
+//       log(`stream error; reconnecting in ${Math.round(reconnectDelay/1000)}s…`);
+//       reconnectTimer = setTimeout(setSrc, reconnectDelay);
+//     }
+//   };
+
+//   setSrc();
+//   startPolling();  // status/fire polling is fine to keep running
+// }
+
+// function stopStream(){
+//   currentStream = null;
+//   if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null; }
+//   els.img.onload = null;
+//   els.img.onerror = null;
+//   els.img.src = '';
+//   stopPolling();
+//   showCctvPlaceholder(true); 
+//   log('stopped stream');
+// }
+
+
+
+
+// async function testDetection(){
+//   try{
+//     const r = await fetchJson(cctv.testDetect());
+//     log('test detection: '+JSON.stringify(r));
+//     await refreshFire();
+//   }catch(e){ log('test error: '+e.message); }
+// }
+
+// export function initCctv(){
+//   els.loadBtn.addEventListener('click', loadStream);
+//   els.stopBtn.addEventListener('click', stopStream);
+//   els.testBtn.addEventListener('click', testDetection);
+
+//   refreshStatus(); 
+//   refreshFire();
+// }
+
+
 // cctv.js
 import { cctv } from './config.js';
 
 const els = {
   img:      document.getElementById('cctvImg'),
+  camSel:   document.getElementById('cctvCamSel'),     // NEW
   sel:      document.getElementById('cctvStreamSel'),
   loadBtn:  document.getElementById('cctvLoad'),
   stopBtn:  document.getElementById('cctvStop'),
@@ -19,7 +189,7 @@ let pollTimer = null;
 
 let reconnectTimer = null;
 let reconnectDelay = 1000;   // start with 1s, exponential backoff
-let currentStream = null;
+let currentKey = null;       // "cam|stream" tuple for reconnects
 
 const placeholder = document.getElementById('cctvPlaceholder');
 const quickLoad = document.getElementById('quickCctvLoad');
@@ -42,32 +212,57 @@ async function fetchJson(url){
   return r.json();
 }
 
-async function populateStreams(names) {
-  // Always replace options with what backend reports
-  els.sel.innerHTML = '';
-  for (const n of names) {
+function populateCameraOptions(camerasObj){
+  // camerasObj is from /api/status: { cameras: { cam1: {...}, cam2: {...} } }
+  const cams = Object.keys(camerasObj || {});
+  els.camSel.innerHTML = '';
+  for (const id of cams){
     const opt = document.createElement('option');
-    opt.value = opt.textContent = n;
+    opt.value = opt.textContent = id;
+    els.camSel.appendChild(opt);
+  }
+  // default select the first camera, if any
+  if (cams.length && !els.camSel.value) els.camSel.value = cams[0];
+}
+
+function populateStreamOptions(){
+  // backend exposes 'main' and 'sub'
+  els.sel.innerHTML = '';
+  for (const s of ['main','sub']){
+    const opt = document.createElement('option');
+    opt.value = opt.textContent = s;
     els.sel.appendChild(opt);
   }
+  if (!els.sel.value) els.sel.value = 'main';
 }
 
 async function refreshStatus(){
   try{
     const s = await fetchJson(cctv.status());
-    els.camId.textContent   = s.camera_id ?? '—';
-    els.streams.textContent = (s.streams || []).join(', ') || '—';
-    els.active.textContent  = Object.keys(s.active_streams || {}).join(', ') || '—';
+    // s: { inference_url, fire_enabled, frame_rate, cameras: { cam1: stats, ... } }
+    const cams = s.cameras || {};
+    populateCameraOptions(cams);
+    populateStreamOptions();
 
-    if (Array.isArray(s.streams) && s.streams.length) {
-      await populateStreams(s.streams);       // <— always sync dropdown
+    const cam = els.camSel.value;
+    if (cam && cams[cam]){
+      const st = cams[cam];
+      els.camId.textContent   = cam;
+      els.streams.textContent = (st.streams || []).join(', ') || 'main, sub';
+      els.active.textContent  = Object.keys(st.active_streams || {}).filter(k => st.active_streams[k]).join(', ') || '—';
+    } else {
+      els.camId.textContent = '—';
+      els.streams.textContent = '—';
+      els.active.textContent = '—';
     }
   }catch(e){ log('status error: '+e.message); }
 }
 
 async function refreshFire(){
   try{
-    const f = await fetchJson(cctv.fireStatus());
+    const cam = els.camSel.value;
+    if(!cam) return; // nothing selected yet
+    const f = await fetchJson(cctv.fireStatus(cam));
     els.fire.textContent = String(f.fire_detected ?? false);
     els.last.textContent = f.last_check ?? '—';
   }catch(e){ log('fire status error: '+e.message); }
@@ -79,52 +274,37 @@ function startPolling(){
 }
 function stopPolling(){ if(pollTimer){ clearInterval(pollTimer); pollTimer=null; } }
 
-/*
-function loadStream(){
-  const which = els.sel.value;                      // <— use the right element
-  if (!which) { log('no stream selected'); return; }
-  els.img.src = cctv.streamUrl(which) + `?t=${Date.now()}`; // cache-bust
-  log(`loading /video_feed/${which}`);
-  startPolling();
-}
+function buildKey(cam, stream){ return `${cam}|${stream}`; }
 
-
-function stopStream(){
-  els.img.src = '';
-  stopPolling();
-  log('stopped stream');
-}
-*/
 function loadStream(){
-  const which = els.sel.value;
-  if (!which) { log('no stream selected'); return; }
+  const cam = els.camSel.value;
+  const stream = els.sel.value;
+  if (!cam)     { log('no camera selected'); return; }
+  if (!stream)  { log('no stream selected'); return; }
+
+  const key = buildKey(cam, stream);
 
   // cancel any previous reconnect loop
   if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null; }
   reconnectDelay = 1000;   // reset backoff each time user presses Load
-  currentStream = which;
+  currentKey = key;
 
   const setSrc = () => {
-    // cache-bust so the browser opens a fresh long-lived connection
-    els.img.src = cctv.streamUrl(which) + `?t=${Date.now()}`;
-    log(`loading /video_feed/${which}`);
-    showCctvPlaceholder(false);              // <- hide on attempt
-
+    els.img.src = cctv.streamUrl(cam, stream) + `?t=${Date.now()}`;
+    log(`loading /video_feed/${cam}/${stream}`);
+    showCctvPlaceholder(false);
   };
 
-  // When the stream connection ends (clean close) browsers often fire 'load'
   els.img.onload = () => {
-    // If the connection closed, try reconnecting after a short delay
-    if (currentStream === which) {
+    if (currentKey === key) {
       reconnectDelay = Math.min(reconnectDelay * 1.5, 10000);
       log(`stream ended; reconnecting in ${Math.round(reconnectDelay/1000)}s…`);
       reconnectTimer = setTimeout(setSrc, reconnectDelay);
     }
   };
 
-  // When the connection errors out, also retry
   els.img.onerror = () => {
-    if (currentStream === which) {
+    if (currentKey === key) {
       reconnectDelay = Math.min(reconnectDelay * 2, 10000);
       log(`stream error; reconnecting in ${Math.round(reconnectDelay/1000)}s…`);
       reconnectTimer = setTimeout(setSrc, reconnectDelay);
@@ -132,11 +312,11 @@ function loadStream(){
   };
 
   setSrc();
-  startPolling();  // status/fire polling is fine to keep running
+  startPolling();
 }
 
 function stopStream(){
-  currentStream = null;
+  currentKey = null;
   if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null; }
   els.img.onload = null;
   els.img.onerror = null;
@@ -146,12 +326,11 @@ function stopStream(){
   log('stopped stream');
 }
 
-
-
-
 async function testDetection(){
   try{
-    const r = await fetchJson(cctv.testDetect());
+    const cam = els.camSel.value;
+    if(!cam){ log('no camera selected'); return; }
+    const r = await fetchJson(cctv.testDetect(cam));
     log('test detection: '+JSON.stringify(r));
     await refreshFire();
   }catch(e){ log('test error: '+e.message); }
@@ -161,6 +340,15 @@ export function initCctv(){
   els.loadBtn.addEventListener('click', loadStream);
   els.stopBtn.addEventListener('click', stopStream);
   els.testBtn.addEventListener('click', testDetection);
+
+  // repopulate streams/fire when switching camera
+  if (els.camSel){
+    els.camSel.addEventListener('change', () => {
+      populateStreamOptions();
+      refreshStatus();
+      refreshFire();
+    });
+  }
 
   refreshStatus(); 
   refreshFire();

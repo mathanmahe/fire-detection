@@ -1,6 +1,7 @@
 const HLS_PORT   = 8080; 
 const RTMP_PORT  = 1935; 
-const rtsp_port = 8080; 
+// const rtsp_port = 8080; // cctv
+const rtsp_port = 8085; // webcam
 const API_PORT   = 9000;   // detection server
 const USE_TUNNEL = false;  
 
@@ -16,12 +17,26 @@ export const config = {
 const host = (location.hostname && location.hostname.length) ? location.hostname : 'localhost';
 const proto = (location.protocol === 'file:') ? 'http:' : location.protocol;
 
+// single camera
+// export const cctv = {
+//   base:       `${proto}//${host}:${rtsp_port}`,
+//   streamUrl:  (name) => `${proto}//${host}:${rtsp_port}/video_feed/${encodeURIComponent(name)}`,
+//   status:     ()      => `${proto}//${host}:${rtsp_port}/api/status`,
+//   fireStatus: ()      => `${proto}//${host}:${rtsp_port}/api/fire_status`,
+//   testDetect: ()      => `${proto}//${host}:${rtsp_port}/api/test_fire_detection`,
+// };
+
+
 export const cctv = {
   base:       `${proto}//${host}:${rtsp_port}`,
-  streamUrl:  (name) => `${proto}//${host}:${rtsp_port}/video_feed/${encodeURIComponent(name)}`,
-  status:     ()      => `${proto}//${host}:${rtsp_port}/api/status`,
-  fireStatus: ()      => `${proto}//${host}:${rtsp_port}/api/fire_status`,
-  testDetect: ()      => `${proto}//${host}:${rtsp_port}/api/test_fire_detection`,
+  // NEW: camera + stream
+  streamUrl:  (camera, stream) => `${proto}//${host}:${rtsp_port}/video_feed/${encodeURIComponent(camera)}/${encodeURIComponent(stream)}`,
+  // status now returns all cameras
+  status:     ()               => `${proto}//${host}:${rtsp_port}/api/status`,
+  // per-camera fire status
+  fireStatus: (camera)         => `${proto}//${host}:${rtsp_port}/api/fire_status?camera=${encodeURIComponent(camera)}`,
+  // per-camera test
+  testDetect: (camera)         => `${proto}//${host}:${rtsp_port}/api/test_fire_detection?camera=${encodeURIComponent(camera)}`,
 };
 
 // for testing on Mathan's machine
