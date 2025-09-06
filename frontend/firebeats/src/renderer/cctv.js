@@ -215,14 +215,23 @@ async function fetchJson(url){
 function populateCameraOptions(camerasObj){
   // camerasObj is from /api/status: { cameras: { cam1: {...}, cam2: {...} } }
   const cams = Object.keys(camerasObj || {});
+  
+  // Preserve the current selection
+  const currentSelection = els.camSel.value;
+  
   els.camSel.innerHTML = '';
   for (const id of cams){
     const opt = document.createElement('option');
     opt.value = opt.textContent = id;
     els.camSel.appendChild(opt);
   }
-  // default select the first camera, if any
-  if (cams.length && !els.camSel.value) els.camSel.value = cams[0];
+  
+  // Restore the previous selection if it still exists, otherwise default to first
+  if (currentSelection && cams.includes(currentSelection)) {
+    els.camSel.value = currentSelection;
+  } else if (cams.length && !els.camSel.value) {
+    els.camSel.value = cams[0];
+  }
 }
 
 function populateStreamOptions(){
@@ -345,7 +354,7 @@ export function initCctv(){
   if (els.camSel){
     els.camSel.addEventListener('change', () => {
       populateStreamOptions();
-      refreshStatus();
+      // Remove refreshStatus() call here to prevent dropdown reset
       refreshFire();
     });
   }
